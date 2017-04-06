@@ -1,5 +1,7 @@
-Data Loading
-============
+Load Data
+=========
+
+Perform the following steps to load single-cell expression data into BigQuery.
 
 ## (1) Convert source data to long, sparse format.
 
