@@ -1,0 +1,152 @@
+---
+# Copyright 2017 Verily Life Sciences Inc.
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+title: "Testing R vs. JavaScript"
+output:
+  html_document:
+    toc: yes
+params:
+  PROJECT_ID: "PROJECT_ID"
+  # Path to the bq command line tool.
+  BQ_PATH: "~/bin/google-cloud-sdk/bin/bq"
+  DIGITS_OF_PRECISION: 8
+  # This table will be created.
+  TEST_CASES_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+
+# This RMarkdown is a parameterized report.  See
+# http://rmarkdown.rstudio.com/developer_parameterized_reports.html
+# for more detail.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This report compares results from both R and BigQuery implementations of the
+binomial distribution.  It is currently configured to consider mismatches at
+`r params$DIGITS_OF_PRECISION` digits of precision or greater as errors.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+# Use the copy from GitHub, not CRAN, which has support for standard SQL.
+# install.packages('devtools')
+# devtools::install_github("rstats-db/bigrquery")
+library(bigrquery)
+```
+
+Generate some test data over the range of values we might expect in our data.
+
+```{r}
+num_test_cases = 20000
+max_population1_size = 100000
+max_population2_size = 1000000
+obs = data.frame(
+  k1=as.integer(runif(num_test_cases, 1, max_population1_size)),
+  n1=rep(max_population1_size, num_test_cases),
+  k2=as.integer(runif(num_test_cases, 1, max_population2_size)),
+  n2=rep(max_population2_size, num_test_cases))
+binom_obs = mutate(obs,
+                   r_pbinom=pbinom(k1, n1, k2/n2))
+```
+
+```{r results='asis'}
+knitr::kable(head(binom_obs))
+```
+
+Write it out to a file and then upload to BigQuery.
+```{r}
+test_cases_filename = tempfile("test_cases",fileext=".csv")
+
+write.csv(binom_obs, test_cases_filename, row.names = FALSE)
+
+system(paste(params$BQ_PATH,
+             "--project", params$PROJECT_ID,
+            "load  --replace --autodetect",
+            params$TEST_CASES_TABLE,
+            test_cases_filename))
+```
+
+Check for result mismatches.
+```{r}
+query = sprintf('
+CREATE TEMPORARY FUNCTION
+  bq_pbinom(k FLOAT64,
+    n FLOAT64,
+    p FLOAT64)
+  RETURNS FLOAT64
+  LANGUAGE js AS """
+  if (k < 0 || k > n || n <= 0) return 0.0;
+  if (p < 0 || p > 1) return NaN;
+  var log_p = Math.log(p);
+  var log_pm1 = Math.log(1-p);
+  var log_coeff = 0;  // Math.log(1)
+  var pvalue = Math.pow(1-p, n);
+  for (var i = 1; i <= k; i++) {
+    log_coeff = log_coeff + Math.log(n-i+1) - Math.log(i);
+    pvalue = pvalue + Math.exp(log_coeff + i*log_p + (n-i)*log_pm1);
+  }
+  return pvalue;
+""";
+
+WITH
+  tests AS (
+  SELECT
+    k1,
+    n1,
+    k2,
+    n2,
+    r_pbinom,
+    bq_pbinom(k1, n1, k2/n2) AS bq_pbinom
+  FROM
+    `%s` )
+SELECT
+  *
+FROM
+  tests
+WHERE
+  ROUND(r_pbinom, %d) != ROUND(bq_pbinom, %d)
+', params$TEST_CASES_TABLE,
+params$DIGITS_OF_PRECISION, params$DIGITS_OF_PRECISION,
+params$DIGITS_OF_PRECISION, params$DIGITS_OF_PRECISION)
+result = query_exec(query, project = params$PROJECT_ID, useLegacySql = FALSE)
+```
+
+```{r results='asis'}
+knitr::kable(head(result))
+```
+
+How many results were not close enough?
+```{r}
+nrow(result)
+```
+
+Plot the results.  Re-run this parameterized RMarkdown result with 8, 9, 10, 11,
+or 12 digits of precision and re-plot the result.
+```{r}
+obs = bind_rows(
+  mutate(select(binom_obs, k1, k2),
+             test="pass"),
+  mutate(select(result, k1, k2),
+         test="fail"))
+
+ggplot(obs, aes(x=k1, y=k2, color=test, size=test)) +
+  geom_point(alpha=1/4) +
+  scale_size_manual(values=c(4,2)) +
+  ggtitle(paste("Test cases overplotted with mismatches at",
+                params$DIGITS_OF_PRECISION,
+                "digits of precision."))
+```
+
+```{r}
+deltas = mutate(result, delta = abs(r_pbinom - bq_pbinom))
+```
+
+```{r}
+ggplot(deltas, aes(x="pbinom", y=delta)) +
+  geom_boxplot() +
+  ggtitle("Magnitude of mismatches.")
+```

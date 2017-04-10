@@ -1,0 +1,77 @@
+---
+# Copyright 2017 Verily Life Sciences Inc.
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+title: "Differential Expression"
+output:
+  html_document:
+    toc: yes
+params:
+  PROJECT_ID: "PROJECT_ID"
+  DATASET_DESCRIPTION: "Brief description of the single-cell dataset."
+  EXTERNAL_JAVA_SCRIPT_LIBRARY: "gs://BUCKET-NAME/PATH/TO/binomial_distribution.js"
+  # Which cluster to compare to all others for differential expression.
+  ONE_CLUSTER: "1"
+  # These tables must exist.
+  RAW_DATA_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  PASSING_CELLS_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  PASSING_GENES_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  CLUSTER_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  # This table will be created.
+  DIFFERENTIAL_EXPRESSION_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+
+# This RMarkdown is a parameterized report.  See
+# http://rmarkdown.rstudio.com/developer_parameterized_reports.html
+# for more detail.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Whether or not to cache chunk results for faster rendering when tweaking
+# narrative and plots.
+knitr::opts_chunk$set(cache=FALSE)
+```
+
+This report performs differential expression on dataset: `r params$DATASET_DESCRIPTION`
+
+```{r}
+library(dplyr)
+# Use the copy from GitHub, not CRAN, which has support for standard SQL.
+# install.packages("devtools")
+# devtools::install_github("rstats-db/bigrquery")
+library(bigrquery)
+```
+
+There are many ways to facilitate templated queries.  Here we use Python via
+[reticulate](https://github.com/rstudio/reticulate) and
+[Jinja2](http://jinja.pocoo.org/docs/2.9/). As another example, see
+[this R approach](https://github.com/googlegenomics/codelabs/blob/3a0a1b754e78bc159a9c6deb604a60344034cc2a/R/PlatinumGenomes-QC/rHelpers/setup.R).
+
+```{r helper, cache=FALSE}
+library(reticulate)
+jinja = import("jinja2")
+# If you get an error, in the shell run:
+#    pip install jinja2
+py = import_builtins()
+
+perform_bqquery = function(sql_path, ...) {
+  sql = jinja$Template(py$open(sql_path, "r")$read())$render(params)
+  cat(sql)
+  query_exec(sql, useLegacySql = FALSE, project=params$PROJECT_ID, ...)
+}
+
+```
+
+## Calculate differential expression for cluster `r params$ONE_CLUSTER` versus all others.
+```{r comment=NA}
+diff_expr = perform_bqquery(sql_path = "differential_expression_one_vs_the_rest.sql",
+                            destination_table = params$DIFFERENTIAL_EXPRESSION_TABLE,
+                            page_size = 25,
+                            max_pages = 1)
+```
+
+```{r results='asis'}
+knitr::kable(diff_expr)
+```
