@@ -27,6 +27,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Whether or not to cache chunk results for faster rendering when tweaking
 # narrative and plots.
 knitr::opts_chunk$set(cache=FALSE)
+# Whether or not to emit progress messages from bigrquery.
+options("bigrquery.quiet"=TRUE)
 ```
 
 This report performs quality control on dataset: `r params$DATASET_DESCRIPTION`
@@ -58,7 +60,6 @@ perform_bqquery = function(sql_path, ...) {
   cat(sql)
   query_exec(sql, useLegacySql = FALSE, project=params$PROJECT_ID, ...)
 }
-
 ```
 
 ## Compute raw data counts
@@ -72,22 +73,53 @@ perform_bqquery(sql_path = "raw_data_counts.sql")
 ```{r cell_metrics, comment=NA}
 cell_metrics = perform_bqquery(
   sql_path = "cell_metrics.sql",
-  destination_table = params$CELL_METRICS_TABLE)
+  destination_table = params$CELL_METRICS_TABLE,
+  max_pages = Inf)
+dim(cell_metrics)
+```
 
+```{r results="asis"}
+knitr::kable(head(cell_metrics))
 ```
 
 ## Visualize cell metrics
 
 ```{r}
-qplot(alltrans, data=cell_metrics, geom="histogram")
+plot_metrics = function(data, x, xlab, ylab, title) {
+  gg = ggplot(data, aes_string(x)) +
+    geom_histogram(col="red", aes(fill=..count..)) +
+    scale_x_log10(labels=comma) +
+    scale_y_log10(labels=comma) +
+    scale_fill_continuous(labels=comma) +
+    xlab(paste(xlab, "(log scale)")) +
+    ylab(paste(ylab, "(log scale)")) +
+    ggtitle(paste("Histogram:", title))
+  return(gg)
+}
 ```
 
 ```{r}
-qplot(mttrans, data=cell_metrics, geom="histogram")
+plot_metrics(data=cell_metrics,
+             x="alltrans",
+             xlab="transcript count",
+             ylab="cell count",
+             title="Transcripts per cell")
 ```
 
 ```{r}
-qplot(gene_cnt, data=cell_metrics, geom="histogram")
+plot_metrics(data=cell_metrics,
+             x="mttrans",
+             xlab="mitochondrial transcript count",
+             ylab="cell count",
+             title="Mitochondrial transcripts per cell")
+```
+
+```{r}
+plot_metrics(data=cell_metrics,
+             x="gene_cnt",
+             xlab="gene count",
+             ylab="cell count",
+             title="Genes per cell")
 ```
 
 ## Choose quality control thresholds and compute the cell subset
@@ -104,18 +136,31 @@ perform_bqquery(sql_path = "passing_cells.sql",
 ```{r gene_metrics, comment=NA}
 gene_metrics = perform_bqquery(
   sql_path = "gene_metrics.sql",
-  destination_table = params$GENE_METRICS_TABLE)
+  destination_table = params$GENE_METRICS_TABLE,
+  max_pages = Inf)
+dim(gene_metrics)
+```
 
+```{r results="asis"}
+knitr::kable(head(gene_metrics))
 ```
 
 ## Visualize gene metrics
 
 ```{r}
-qplot(alltrans, data=gene_metrics, geom="histogram")
+plot_metrics(data=gene_metrics,
+             x="alltrans",
+             xlab="transcript count",
+             ylab="gene count",
+             title="Transcripts per gene")
 ```
 
 ```{r}
-qplot(cell_cnt, data=gene_metrics, geom="histogram")
+plot_metrics(data=gene_metrics,
+             x="cell_cnt",
+             xlab="cell count",
+             ylab="gene count",
+             title="Cells per gene")
 ```
 
 ## Choose quality control thresholds and compute the gene subset
