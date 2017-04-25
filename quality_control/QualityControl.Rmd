@@ -1,0 +1,134 @@
+---
+# Copyright 2017 Verily Life Sciences Inc.
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+title: "Quality Control"
+output: html_document
+params:
+  PROJECT_ID: "PROJECT_ID"
+  DATASET_DESCRIPTION: "Brief description of the single-cell dataset."
+  # This table must exist.
+  RAW_DATA_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  # These tables will be created.
+  CELL_METRICS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+  PASSING_CELLS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+  GENE_METRICS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+  PASSING_GENES_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+
+# This RMarkdown is a parameterized report.  See
+# http://rmarkdown.rstudio.com/developer_parameterized_reports.html
+# for more detail.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Whether or not to cache chunk results for faster rendering when tweaking
+# narrative and plots.
+knitr::opts_chunk$set(cache=FALSE)
+```
+
+This report performs quality control on dataset: `r params$DATASET_DESCRIPTION`
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(scales)
+# Use the copy from GitHub, not CRAN, which has support for standard SQL.
+# install.packages("devtools")
+# devtools::install_github("rstats-db/bigrquery")
+library(bigrquery)
+```
+
+There are many ways to facilitate templated queries.  Here we use Python via
+[reticulate](https://github.com/rstudio/reticulate) and
+[Jinja2](http://jinja.pocoo.org/docs/2.9/). As another example, see
+[this R approach](https://github.com/googlegenomics/codelabs/blob/3a0a1b754e78bc159a9c6deb604a60344034cc2a/R/PlatinumGenomes-QC/rHelpers/setup.R).
+
+```{r helper, cache=FALSE}
+library(reticulate)
+jinja = import("jinja2")
+# If you get an error, in the shell run:
+#    pip install jinja2
+py = import_builtins()
+
+perform_bqquery = function(sql_path, ...) {
+  sql = jinja$Template(py$open(sql_path, "r")$read())$render(params)
+  cat(sql)
+  query_exec(sql, useLegacySql = FALSE, project=params$PROJECT_ID, ...)
+}
+
+```
+
+## Compute raw data counts
+
+```{r raw_counts, comment=NA}
+perform_bqquery(sql_path = "raw_data_counts.sql")
+```
+
+## Compute cell metrics
+
+```{r cell_metrics, comment=NA}
+cell_metrics = perform_bqquery(
+  sql_path = "cell_metrics.sql",
+  destination_table = params$CELL_METRICS_TABLE)
+
+```
+
+## Visualize cell metrics
+
+```{r}
+qplot(alltrans, data=cell_metrics, geom="histogram")
+```
+
+```{r}
+qplot(mttrans, data=cell_metrics, geom="histogram")
+```
+
+```{r}
+qplot(gene_cnt, data=cell_metrics, geom="histogram")
+```
+
+## Choose quality control thresholds and compute the cell subset
+
+```{r passing_cells, comment=NA}
+perform_bqquery(sql_path = "passing_cells.sql",
+                destination_table = params$PASSING_CELLS_TABLE,
+                page_size = 10,
+                max_pages = 1)
+```
+
+## Compute gene metrics
+
+```{r gene_metrics, comment=NA}
+gene_metrics = perform_bqquery(
+  sql_path = "gene_metrics.sql",
+  destination_table = params$GENE_METRICS_TABLE)
+
+```
+
+## Visualize gene metrics
+
+```{r}
+qplot(alltrans, data=gene_metrics, geom="histogram")
+```
+
+```{r}
+qplot(cell_cnt, data=gene_metrics, geom="histogram")
+```
+
+## Choose quality control thresholds and compute the gene subset
+
+```{r passing_genes, comment=NA}
+perform_bqquery(sql_path = "passing_genes.sql",
+                destination_table = params$PASSING_GENES_TABLE,
+                page_size = 10,
+                max_pages = 1)
+```
+
+## Compute filtered data counts
+
+```{r passing_counts, comment=NA}
+perform_bqquery(sql_path = "passing_data_counts.sql")
+```
