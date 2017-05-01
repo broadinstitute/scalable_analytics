@@ -1,0 +1,146 @@
+---
+# Copyright 2017 Verily Life Sciences Inc.
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+title: "Compare Clusters"
+output:
+  html_document:
+    toc: yes
+params:
+  PROJECT_ID: "PROJECT_ID"
+  DATASET_DESCRIPTION: "Brief description of the single-cell dataset."
+  # List of markers for which to compare cluster-specific expression.
+  MARKER_GENE_LIST: "'MARKER_GENE1b','MARKER_GENE2b','MARKER_GENE3b"
+  # These tables must exist.
+  RAW_DATA_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  CLUSTER_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+
+# This RMarkdown is a parameterized report.  See
+# http://rmarkdown.rstudio.com/developer_parameterized_reports.html
+# for more detail.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Whether or not to cache chunk results for faster rendering when tweaking
+# narrative and plots.
+knitr::opts_chunk$set(cache=FALSE)
+```
+
+This report performs compares expression of marker genes across clusters
+on dataset: `r params$DATASET_DESCRIPTION`
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(scales)
+# Use the copy from GitHub, not CRAN, which has support for standard SQL.
+# install.packages("devtools")
+# devtools::install_github("rstats-db/bigrquery")
+library(bigrquery)
+```
+
+There are many ways to facilitate templated queries.  Here we use Python via
+[reticulate](https://github.com/rstudio/reticulate) and
+[Jinja2](http://jinja.pocoo.org/docs/2.9/). As another example, see
+[this R approach](https://github.com/googlegenomics/codelabs/blob/3a0a1b754e78bc159a9c6deb604a60344034cc2a/R/PlatinumGenomes-QC/rHelpers/setup.R).
+
+```{r helper, cache=FALSE}
+library(reticulate)
+jinja = import("jinja2")
+# If you get an error, in the shell run:
+#    pip install jinja2
+py = import_builtins()
+
+perform_bqquery = function(sql_path, ...) {
+  sql = jinja$Template(py$open(sql_path, "r")$read())$render(params)
+  cat(sql)
+  query_exec(sql, useLegacySql = FALSE, project=params$PROJECT_ID, ...)
+}
+
+```
+
+## Retrieve cluster cell counts.
+```{r comment=NA}
+cluster_cell_counts = perform_bqquery(
+  sql_path = "cluster_cell_counts.sql")
+dim(cluster_cell_counts)
+```
+
+```{r results='asis'}
+knitr::kable(head(cluster_cell_counts))
+```
+
+## Plot the counts.
+```{r cluster_cell_count_plot, fig.align="center"}
+# Order the counts from least to greatest.
+cluster_cell_counts$cluster = factor(cluster_cell_counts$cluster,
+                                     dplyr::arrange(cluster_cell_counts, desc(cnt))$cluster)
+ggplot(cluster_cell_counts, aes(y=cnt, x=cluster)) +
+  geom_point() +
+  scale_y_continuous(labels=comma) +
+  xlab("cluster") +
+  ylab("number of cells") +
+  ggtitle("Cell counts per cluster")
+```
+
+## Retrieve the aggregate expression per cluster.
+```{r comment=NA}
+cluster_gene_expression = perform_bqquery(
+  sql_path = "gene_expression_by_cluster.sql")
+dim(cluster_gene_expression)
+```
+
+```{r results='asis'}
+knitr::kable(head(cluster_gene_expression))
+```
+
+## Cap some of the upper values.
+```{r}
+cluster_gene_expression$cluster = as.factor(cluster_gene_expression$cluster)
+cluster_gene_expression$gene = as.factor(cluster_gene_expression$gene)
+
+capped_cluster_expression = dplyr::mutate(
+  cluster_gene_expression,
+  capped_avg_trans_cnt = pmin(avg_trans_cnt, 3),
+  capped_perc_expr = pmin(perc_expr, 0.9))
+```
+
+## Set missing values to zero for a better-looking plot.
+
+When we [loaded the data into BigQuery](../data_loading), we omitted any
+zero-valued transcript counts. Here we set those missing values to an expression
+rate of zero percent to improve the visualization.
+```{r}
+all_values =
+  tidyr::complete(capped_cluster_expression,
+                  gene,
+                  cluster,
+                  fill=list(capped_perc_expr=0.0))
+```
+
+## Plot the data.
+```{r retinal_dotplot, fig.align="center", fig.width=10, fig.height=10}
+ggplot(all_values,
+       aes(y = cluster, x = gene)) +
+  geom_point(aes(colour = capped_avg_trans_cnt,
+                 size = capped_perc_expr)) +
+  scale_color_gradient(low ="blue",
+                       high = "red",
+                       limits = c(1,
+                                  max(capped_cluster_expression$capped_avg_trans_cnt) ),
+                       name = "Transcript\nCount\n(Capped\n3.0)") +
+  scale_size(range = c(0, 10),
+             labels=percent_format(),
+             name = "Percent\nCells\nExpressing\nTranscript\n(Capped\n90%)") +
+  ylab("Cluster") +
+  xlab("Gene") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  theme(axis.text.x=element_text(size=12, face="italic", angle=45, hjust=1)) +
+  theme(axis.text.y=element_text(size=12, face="italic"))
+```
