@@ -167,13 +167,18 @@ to be used.
 
 ``` bash
 EXPORT_SUBDIR=<model subdirectory underneath 'export/Servo/'>
+BIGQUERY_DATASET_NAME=<the dataset for writing prediction output>
 python -m trainer.predict_clusters \
     --setup_file ./setup.py \
     --model gs://${BUCKET_NAME}/models/${JOB_NAME}/export/Servo/${EXPORT_SUBDIR} \
     --input gs://${BUCKET_NAME}/scrna-seq/${EXAMPLES_SUBDIR}/examples* \
     --output gs://${BUCKET_NAME}/models/${JOB_NAME}/predictions/ \
-    --temp_location gs://${BUCKET_NAME}/models/${JOB_NAME}/tmp/ \
+    --temp_location ${BIGQUERY_DATASET_NAME}.${JOB_NAME} \
     --project ${PROJECT_ID} \
+    --disk_size_gb 50 \
+    --worker_machine_type n1-standard-1 \
     --runner DataflowRunner
 ```
 
+The above command uses a smaller amount of disk than the default and single
+core instance types so that autoscaling can work in a fine-grained manner.
