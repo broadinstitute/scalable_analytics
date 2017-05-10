@@ -27,6 +27,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Whether or not to cache chunk results for faster rendering when tweaking
 # narrative and plots.
 knitr::opts_chunk$set(cache=FALSE)
+# Whether or not to emit progress messages from bigrquery.
+options("bigrquery.quiet"=TRUE)
 ```
 
 This report performs compares expression of marker genes across clusters
