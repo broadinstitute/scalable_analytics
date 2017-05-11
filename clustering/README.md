@@ -172,8 +172,8 @@ python -m trainer.predict_clusters \
     --setup_file ./setup.py \
     --model gs://${BUCKET_NAME}/models/${JOB_NAME}/export/Servo/${EXPORT_SUBDIR} \
     --input gs://${BUCKET_NAME}/scrna-seq/${EXAMPLES_SUBDIR}/examples* \
-    --output gs://${BUCKET_NAME}/models/${JOB_NAME}/predictions/ \
-    --temp_location ${BIGQUERY_DATASET_NAME}.${JOB_NAME} \
+    --output ${BIGQUERY_DATASET_NAME}.${JOB_NAME} \
+    --temp_location gs://${BUCKET_NAME}/models/${JOB_NAME}/tmp/ \
     --project ${PROJECT_ID} \
     --disk_size_gb 50 \
     --worker_machine_type n1-standard-1 \

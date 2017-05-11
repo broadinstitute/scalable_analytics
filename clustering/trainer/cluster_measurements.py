@@ -24,6 +24,10 @@ from trainer.shared_constants import *
 EXAMPLE_KEY = "input_feature"
 DENSE_KEY = "dense"
 
+# Constant for use with read_batch_features
+# https://www.tensorflow.org/api_docs/python/tf/contrib/learn/read_batch_features
+QUEUE_CAPACITY_MULTIPLIER = 3
+
 tf.flags.DEFINE_bool("use_cosine_distance", False,
                      "Override the default of euclidean distance to instead "
                      "use cosine distance.")
@@ -116,6 +120,7 @@ def _input_fn():
   raw_features = tf.contrib.learn.io.read_batch_features(
       file_pattern=input_files,
       batch_size=FLAGS.batch_size,
+      queue_capacity = QUEUE_CAPACITY_MULTIPLIER * FLAGS.batch_size,
       randomize_input=True,
       reader=gzip_reader,
       features=_get_feature_columns())
