@@ -21,6 +21,9 @@ params:
   CLUSTER_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
   # This table will be created.
   DIFFERENTIAL_EXPRESSION_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+  # Only create the tables if they do not already exist.  For other options, see
+  # https://cloud.google.com/dataflow/model/bigquery-io#writing-to-bigquery
+  WRITE_DISPOSITION: "WRITE_EMPTY"
 
 # This RMarkdown is a parameterized report.  See
 # http://rmarkdown.rstudio.com/developer_parameterized_reports.html
@@ -32,6 +35,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # Whether or not to cache chunk results for faster rendering when tweaking
 # narrative and plots.
 knitr::opts_chunk$set(cache=FALSE)
+# Whether or not to emit progress messages from bigrquery.
+options("bigrquery.quiet"=TRUE)
 ```
 
 This report performs differential expression on dataset: `r params$DATASET_DESCRIPTION`
@@ -68,6 +73,7 @@ perform_bqquery = function(sql_path, ...) {
 ```{r comment=NA}
 diff_expr = perform_bqquery(sql_path = "differential_expression_one_vs_the_rest.sql",
                             destination_table = params$DIFFERENTIAL_EXPRESSION_TABLE,
+                            write_disposition = params$WRITE_DISPOSITION,
                             page_size = 25,
                             max_pages = 1)
 ```

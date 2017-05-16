@@ -16,6 +16,9 @@ params:
   PASSING_CELLS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
   GENE_METRICS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
   PASSING_GENES_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+  # Only create the tables if they do not already exist.  For other options, see
+  # https://cloud.google.com/dataflow/model/bigquery-io#writing-to-bigquery
+  WRITE_DISPOSITION: "WRITE_EMPTY"
 
 # This RMarkdown is a parameterized report.  See
 # http://rmarkdown.rstudio.com/developer_parameterized_reports.html
@@ -74,6 +77,7 @@ perform_bqquery(sql_path = "raw_data_counts.sql")
 cell_metrics = perform_bqquery(
   sql_path = "cell_metrics.sql",
   destination_table = params$CELL_METRICS_TABLE,
+  write_disposition = params$WRITE_DISPOSITION,
   max_pages = Inf)
 dim(cell_metrics)
 ```
@@ -85,24 +89,32 @@ knitr::kable(head(cell_metrics))
 ## Visualize cell metrics
 
 ```{r}
-plot_metrics = function(data, x, xlab, ylab, title) {
+plot_metrics = function(data, x, xlab, title) {
   gg = ggplot(data, aes_string(x)) +
     geom_histogram(col="red", aes(fill=..count..)) +
     scale_x_log10(labels=comma) +
     scale_y_log10(labels=comma) +
     scale_fill_continuous(labels=comma) +
     xlab(paste(xlab, "(log scale)")) +
-    ylab(paste(ylab, "(log scale)")) +
+    ylab(paste("Frequency (log scale)")) +
     ggtitle(paste("Histogram:", title))
   return(gg)
 }
+```
+
+```{r cell_complexity, fig.align="center"}
+plot(sort(cell_metrics$gene_cnt),
+     xlab=paste("Cells ranked by complexity (Less to More)",
+                "'complexity' is the number of genes expressed per cell",
+                sep="\n"),
+     ylab="Complexity",
+     main="Cell Complexity")
 ```
 
 ```{r}
 plot_metrics(data=cell_metrics,
              x="alltrans",
              xlab="transcript count",
-             ylab="cell count",
              title="Transcripts per cell")
 ```
 
@@ -110,7 +122,6 @@ plot_metrics(data=cell_metrics,
 plot_metrics(data=cell_metrics,
              x="mttrans",
              xlab="mitochondrial transcript count",
-             ylab="cell count",
              title="Mitochondrial transcripts per cell")
 ```
 
@@ -118,7 +129,6 @@ plot_metrics(data=cell_metrics,
 plot_metrics(data=cell_metrics,
              x="gene_cnt",
              xlab="gene count",
-             ylab="cell count",
              title="Genes per cell")
 ```
 
@@ -127,6 +137,7 @@ plot_metrics(data=cell_metrics,
 ```{r passing_cells, comment=NA}
 perform_bqquery(sql_path = "passing_cells.sql",
                 destination_table = params$PASSING_CELLS_TABLE,
+                write_disposition = params$WRITE_DISPOSITION,
                 page_size = 10,
                 max_pages = 1)
 ```
@@ -137,6 +148,7 @@ perform_bqquery(sql_path = "passing_cells.sql",
 gene_metrics = perform_bqquery(
   sql_path = "gene_metrics.sql",
   destination_table = params$GENE_METRICS_TABLE,
+  write_disposition = params$WRITE_DISPOSITION,
   max_pages = Inf)
 dim(gene_metrics)
 ```
@@ -147,11 +159,17 @@ knitr::kable(head(gene_metrics))
 
 ## Visualize gene metrics
 
+```{r gene_prevalence, fig.align="center"}
+hist(log2(gene_metrics$cell_cnt),
+     breaks=100,
+     xlab="log2(Number of cells expressing each gene)",
+     main="Histogram: Gene Prevalence")
+```
+
 ```{r}
 plot_metrics(data=gene_metrics,
              x="alltrans",
              xlab="transcript count",
-             ylab="gene count",
              title="Transcripts per gene")
 ```
 
@@ -159,7 +177,6 @@ plot_metrics(data=gene_metrics,
 plot_metrics(data=gene_metrics,
              x="cell_cnt",
              xlab="cell count",
-             ylab="gene count",
              title="Cells per gene")
 ```
 
@@ -168,6 +185,7 @@ plot_metrics(data=gene_metrics,
 ```{r passing_genes, comment=NA}
 perform_bqquery(sql_path = "passing_genes.sql",
                 destination_table = params$PASSING_GENES_TABLE,
+                write_disposition = params$WRITE_DISPOSITION,
                 page_size = 10,
                 max_pages = 1)
 ```

@@ -142,7 +142,8 @@ SELECT
   IF(log_effect > 0, pv1, pv2) AS pv,
   log_effect,
   mean_trans_cnt_clusSelected,
-  mean_trans_cnt_clusRest
+  mean_trans_cnt_clusRest,
+  {{ ONE_CLUSTER }} AS clusSelected
 FROM
   pvalues
 WHERE
