@@ -60,7 +60,7 @@ py = import_builtins()
 perform_bqquery = function(sql_path, ...) {
   sql = jinja$Template(py$open(sql_path, "r")$read())$render(params)
   cat(sql)
-  query_exec(sql, useLegacySql = FALSE, project=params$PROJECT_ID, ...)
+  query_exec(sql, use_legacy_sql = FALSE, project=params$PROJECT_ID, ...)
 }
 
 ```
