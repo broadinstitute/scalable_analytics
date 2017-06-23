@@ -4,7 +4,7 @@ Load Bipolar Cell 2016 single-cell RNAseq data
 The following steps will transfer the source data from
 https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE81904
 to Cloud Platform and load it into BigQuery. All of these steps occur in the
-cloud instead of a local machine to reduce network data transfer time.
+cloud instead of a local machine to reduce network data transfer time.  It uses a Compute Engine instance with the [Container-Optimized OS](https://cloud.google.com/container-optimized-os/docs/) VM image to run [Dockerized R](https://github.com/rocker-org/rocker).
 
 # Create and configure a Compute Engine instance.
 

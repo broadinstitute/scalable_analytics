@@ -27,8 +27,8 @@ bq --project PROJECT-ID load --autodetect DATASET-NAME.TABLE-NAME \
   gs://BUCKET-NAME/PATH/TO/LONG/SPARSE/FILE.csv
 ```
 
-Steps to load specific datasets can be found in:
+Here are instructions to load specific datasets, each demonstrating a different technique:
 
-* [Bipolar Cell 2016](./BipolarCell2016.md)
-* [10X Genomics 1.3 Million Brain Cells from E18 Mice](./10X_1.3_Million_Brain_Cells_from_E18_Mice.md)
-* [10X Genomics 1.3 Million Brain Cells from E18 Mice - faster via parallel execution](./10X_1.3_Million_Brain_Cells_from_E18_Mice_parallel.md)
+* [Bipolar Cell 2016](./BipolarCell2016.md) - uses a Compute Engine instance with the [Container-Optimized OS](https://cloud.google.com/container-optimized-os/docs/) VM image to run [Dockerized R](https://github.com/rocker-org/rocker)
+* [10X Genomics 1.3 Million Brain Cells from E18 Mice](./10X_1.3_Million_Brain_Cells_from_E18_Mice.md) - uses a Compute Engine instance with the default VM image to run a Python script
+* [10X Genomics 1.3 Million Brain Cells from E18 Mice - faster via parallel execution](./10X_1.3_Million_Brain_Cells_from_E18_Mice_parallel.md) - uses [Cloud Shell](https://github.com/googlegenomics/dsub) with [dsub](https://github.com/googlegenomics/dsub) for batch computing
