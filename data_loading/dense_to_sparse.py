@@ -14,6 +14,7 @@ gene2,0.0,0.0,0.0
 gene3,1.0,0.0,2.0
 
 Example Output:
+cell,gene,trans_cnt
 cell1,gene3,1.0
 cell3,gene1,3.0
 cell3,gene3,2.0
@@ -24,27 +25,19 @@ https://cloud.google.com/storage/docs/gsutil/commands/cp#streaming-transfers
 
 For uncompressed CSV files:
 
-chmod a+x dense_to_long.py ; \
-  gsutil cat \
-  gs://BUCKET-NAME/PATH/TO/INPUT/FILE.csv
-  \
-  | \
-  ./dense_to_long.py \
-  | \
-  gsutil cp - gs://BUCKET-NAME/PATH/TO/OUTPUT/FILE.csv
+chmod a+x dense_to_sparse.py ; \
+  gsutil cat gs://BUCKET-NAME/PATH/TO/INPUT/FILE.csv \
+  | ./dense_to_sparse.py \
+  | gsutil cp - gs://BUCKET-NAME/PATH/TO/OUTPUT/FILE.csv
 
 For compressed CSV files, use the appropriate command to unzip the file
 before passing it to this script:
 
-chmod a+x dense_to_long.py ; \
-  gsutil cat \
-  gs://BUCKET-NAME/PATH/TO/INPUT/FILE.csv.gz
-  | \
-  gunzip \
-  | \
-  ./dense_to_long.py \
-  | \
-  gsutil cp - gs://BUCKET-NAME/PATH/TO/OUTPUT/FILE.csv
+chmod a+x dense_to_sparse.py ; \
+  gsutil cat gs://BUCKET-NAME/PATH/TO/INPUT/FILE.csv.gz \
+  | gunzip \
+  | ./dense_to_sparse.py \
+  | gsutil cp - gs://BUCKET-NAME/PATH/TO/OUTPUT/FILE.csv
 """
 
 import sys

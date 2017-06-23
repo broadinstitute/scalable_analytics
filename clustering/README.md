@@ -20,7 +20,7 @@ pip install --upgrade pip jinja2 google-cloud-dataflow tensorflow==1.1.0
 3. Set some environment variables to make copy/pasting commands a bit easier.
 
   * `PROJECT_ID=<YOUR_PROJECT>`
-  * `BUCKET_NAME=<YOUR_BUCKET>` this should be the **regional** bucket you
+  * `BUCKET=gs://<YOUR_BUCKET>` this should be the **regional** bucket you
   created during Cloud ML Engine setup.
 
 ## Configuration
@@ -117,7 +117,7 @@ Preprocess the full set of QC-ed measurement data on cloud:
 ```bash
 python -m trainer.preprocess_measurements \
     --setup_file ./setup.py \
-    --output gs://${BUCKET_NAME}/scrna-seq \
+    --output ${BUCKET}/scrna-seq \
     --project ${PROJECT_ID} \
     --input ./PATH/TO/THE/query.sql \
     --runner DataflowRunner
@@ -130,19 +130,19 @@ Perform training on cloud:
 ```bash
 EXAMPLES_SUBDIR=<the date-time subdirectory created during the data preprocess step>
 gsutil cp ./PATH/TO/THE/vocabulary_file \
-  gs://${BUCKET_NAME}/scrna-seq/${EXAMPLES_SUBDIR}/vocabulary_file
+  ${BUCKET}/scrna-seq/${EXAMPLES_SUBDIR}/vocabulary_file
 
 JOB_NAME=cluster_cosine_distance_k_30
 gcloud --project ${PROJECT_ID} ml-engine jobs submit training ${JOB_NAME} \
     --module-name trainer.cluster_measurements \
     --package-path trainer/ \
-    --job-dir gs://${BUCKET_NAME}/models/${JOB_NAME} \
+    --job-dir ${BUCKET}/models/${JOB_NAME} \
     --region us-central1 \
     -- \
-    --input_file_pattern gs://${BUCKET_NAME}/scrna-seq/${EXAMPLES_SUBDIR}/examples* \
-    --output_path gs://${BUCKET_NAME}/models/${JOB_NAME} \
+    --input_file_pattern ${BUCKET}/scrna-seq/${EXAMPLES_SUBDIR}/examples* \
+    --output_path ${BUCKET}/models/${JOB_NAME} \
     --num_clusters 30 \
-    --vocabulary_file gs://${BUCKET_NAME}/scrna-seq/${EXAMPLES_SUBDIR}/vocabulary_file \
+    --vocabulary_file ${BUCKET}/scrna-seq/${EXAMPLES_SUBDIR}/vocabulary_file \
     --use_cosine_distance \
     --num_train_steps 1000
 ```
@@ -154,7 +154,7 @@ summary logs produced during training — both during and after execution.
 
 ```bash
 tensorboard --port=8080 \
-    --logdir gs://${BUCKET_NAME}/models/${JOB_NAME}
+    --logdir ${BUCKET}/models/${JOB_NAME}
 ```
 
 ### Predict the clusters
@@ -170,10 +170,10 @@ EXPORT_SUBDIR=<model subdirectory underneath 'export/Servo/'>
 BIGQUERY_DATASET_NAME=<the dataset for writing prediction output>
 python -m trainer.predict_clusters \
     --setup_file ./setup.py \
-    --model gs://${BUCKET_NAME}/models/${JOB_NAME}/export/Servo/${EXPORT_SUBDIR} \
-    --input gs://${BUCKET_NAME}/scrna-seq/${EXAMPLES_SUBDIR}/examples* \
+    --model ${BUCKET}/models/${JOB_NAME}/export/Servo/${EXPORT_SUBDIR} \
+    --input ${BUCKET}/scrna-seq/${EXAMPLES_SUBDIR}/examples* \
     --output ${BIGQUERY_DATASET_NAME}.${JOB_NAME} \
-    --temp_location gs://${BUCKET_NAME}/models/${JOB_NAME}/tmp/ \
+    --temp_location ${BUCKET}/models/${JOB_NAME}/tmp/ \
     --project ${PROJECT_ID} \
     --disk_size_gb 50 \
     --worker_machine_type n1-standard-1 \

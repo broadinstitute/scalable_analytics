@@ -1,0 +1,14 @@
+--env BEGIN_IDX	--env END_IDX	--input INPUT_FILE	--output OUTPUT_FILE
+0	100000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_0_100k.csv
+100000	200000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_100k_200k.csv
+200000	300000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_200k_300k.csv
+300000	400000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_300k_400k.csv
+400000	500000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_400k_500k.csv
+500000	600000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_500k_600k.csv
+600000	700000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_600k_700k.csv
+700000	800000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_700k_800k.csv
+800000	900000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_800k_900k.csv
+900000	1000000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_900k_1000k.csv
+1000000	1100000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_1000k_1100k.csv
+1100000	1200000	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_1100k_1200k.csv
+1200000	1306127	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_h5.h5	gs://BUCKET-NAME/1M_neurons_filtered_gene_bc_matrices_1200k_end.csv
