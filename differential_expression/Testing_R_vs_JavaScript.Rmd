@@ -112,7 +112,7 @@ WHERE
 ', params$TEST_CASES_TABLE,
 params$DIGITS_OF_PRECISION, params$DIGITS_OF_PRECISION,
 params$DIGITS_OF_PRECISION, params$DIGITS_OF_PRECISION)
-result = query_exec(query, project = params$PROJECT_ID, useLegacySql = FALSE)
+result = query_exec(query, project = params$PROJECT_ID, use_legacy_sql = FALSE)
 ```
 
 ```{r results='asis'}
