@@ -39,9 +39,6 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(scales)
-# Use the copy from GitHub, not CRAN, which has support for standard SQL.
-# install.packages("devtools")
-# devtools::install_github("rstats-db/bigrquery")
 library(bigrquery)
 ```
 
