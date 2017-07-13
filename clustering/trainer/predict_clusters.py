@@ -13,10 +13,10 @@ import logging
 
 import apache_beam as beam
 from apache_beam.io import tfrecordio
-from apache_beam.io.fileio import CompressionTypes
-from apache_beam.utils.pipeline_options import PipelineOptions
-from apache_beam.utils.pipeline_options import SetupOptions
-from apache_beam.utils.pipeline_options import WorkerOptions
+from apache_beam.io.filesystem import CompressionTypes
+from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.options.pipeline_options import WorkerOptions
 import tensorflow as tf
 
 # The KMeansClustering import is not used in the python code below, but
@@ -65,6 +65,7 @@ class PredictDoFn(beam.DoFn):
     This class restores the saved model and runs the subset of tensors that
     perform prediction.
   """
+  INPUT_TENSOR = 'examples:0'
   CLUSTER_CLASSIFICATION_TENSOR = 'Squeeze_1:0'
 
   def __init__(self, model_export_dir):
@@ -79,19 +80,27 @@ class PredictDoFn(beam.DoFn):
         tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
     self.input_tensor = signature_def.inputs[
         tf.saved_model.signature_constants.CLASSIFY_INPUTS].name
+    self.input_tensors = [str(x.name) for x in signature_def.inputs.values()]
+    if self.INPUT_TENSOR not in self.input_tensors:
+      raise ValueError('Expected input tensor %s not in %s with keys %s',
+                       self.INPUT_TENSOR,
+                       self.input_tensors,
+                       signature_def.inputs.keys())
     self.output_tensors = [str(x.name) for x in signature_def.outputs.values()]
-    logging.info('Model output tensors: %s', self.output_tensors)
     if self.CLUSTER_CLASSIFICATION_TENSOR not in self.output_tensors:
       raise ValueError('Expected cluster classification output tensor %s '
-                       'not in %s', self.CLUSTER_CLASSIFICATION_TENSOR,
-                       self.output_tensors)
+                       'not in %s with keys %s',
+                       self.CLUSTER_CLASSIFICATION_TENSOR,
+                       self.output_tensors,
+                       signature_def.outputs.keys())
+
     self.sess = sess
 
   def predict(self, serialized_example):
     input_list = [serialized_example]
     output = self.sess.run(
         [self.CLUSTER_CLASSIFICATION_TENSOR],
-        feed_dict={str(self.input_tensor): input_list})
+        feed_dict={self.INPUT_TENSOR: input_list})
     example = tf.train.Example.FromString(serialized_example)
     return (example.features.feature[SAMPLE_NAME_FEATURE].bytes_list.value[0],
             output[0])

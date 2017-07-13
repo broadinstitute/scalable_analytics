@@ -6,7 +6,7 @@
 from setuptools import find_packages
 from setuptools import setup
 
-REQUIRED_PACKAGES = ['Jinja2==2.8', 'tensorflow==1.1.0']
+REQUIRED_PACKAGES = ['Jinja2==2.8']
 
 setup(
     name='trainer',

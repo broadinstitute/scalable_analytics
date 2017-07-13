@@ -9,12 +9,12 @@ import logging
 import os
 
 import apache_beam as beam
-from apache_beam.io import fileio
+from apache_beam.io.filesystem import CompressionTypes
 from apache_beam.io import tfrecordio
-from apache_beam.utils.pipeline_options import GoogleCloudOptions
-from apache_beam.utils.pipeline_options import PipelineOptions
-from apache_beam.utils.pipeline_options import SetupOptions
-from apache_beam.utils.pipeline_options import WorkerOptions
+from apache_beam.options.pipeline_options import GoogleCloudOptions
+from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.options.pipeline_options import SetupOptions
+from apache_beam.options.pipeline_options import WorkerOptions
 from jinja2 import Template
 
 import tensorflow as tf
@@ -141,7 +141,7 @@ def run(argv=None):
          >> beam.Map(lambda example: example.SerializeToString())
          | 'WriteExamples' >> tfrecordio.WriteToTFRecord(
              file_path_prefix=os.path.join(output_dir, 'examples'),
-             compression_type=fileio.CompressionTypes.GZIP,
+             compression_type=CompressionTypes.GZIP,
              file_name_suffix='.tfrecord.gz'))
 
 
