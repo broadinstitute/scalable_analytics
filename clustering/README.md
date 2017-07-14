@@ -8,13 +8,11 @@ Model clustering. For more detail, see [![ML Toolkit Overview](http://img.youtub
 
 1. [Set up the Dataflow SDK for Python](https://cloud.google.com/dataflow/docs/quickstarts/quickstart-python)
 2. [Set up Cloud ML Engine](https://cloud.google.com/ml-engine/docs/quickstarts/command-line)
-**NOTE:** This code depends on release candidate TensorFlow 1.1 which can be
-installed via the following commands if using virtualenv:
 
 ```bash
 virtualenv --system-site-packages ~/virtualEnvs/tensorflow
 source ~/virtualEnvs/tensorflow/bin/activate
-pip install --upgrade pip jinja2 google-cloud-dataflow tensorflow==1.1.0
+pip install --upgrade pip jinja2 google-cloud-dataflow tensorflow
 ```
 
 3. Set some environment variables to make copy/pasting commands a bit easier.
@@ -136,6 +134,8 @@ JOB_NAME=cluster_cosine_distance_k_30
 gcloud --project ${PROJECT_ID} ml-engine jobs submit training ${JOB_NAME} \
     --module-name trainer.cluster_measurements \
     --package-path trainer/ \
+    --runtime-version 1.2 \
+    --config config.yaml \
     --job-dir ${BUCKET}/models/${JOB_NAME} \
     --region us-central1 \
     -- \
@@ -144,7 +144,9 @@ gcloud --project ${PROJECT_ID} ml-engine jobs submit training ${JOB_NAME} \
     --num_clusters 30 \
     --vocabulary_file ${BUCKET}/scrna-seq/${EXAMPLES_SUBDIR}/vocabulary_file \
     --use_cosine_distance \
-    --num_train_steps 1000
+    --num_train_steps 1000 \
+    --batch_size 1000
+
 ```
 
 ## Tensorboard

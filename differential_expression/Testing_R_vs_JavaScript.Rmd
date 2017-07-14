@@ -32,9 +32,6 @@ binomial distribution.  It is currently configured to consider mismatches at
 ```{r}
 library(ggplot2)
 library(dplyr)
-# Use the copy from GitHub, not CRAN, which has support for standard SQL.
-# install.packages('devtools')
-# devtools::install_github("rstats-db/bigrquery")
 library(bigrquery)
 ```
 

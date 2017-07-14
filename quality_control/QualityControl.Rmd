@@ -40,9 +40,6 @@ This report performs quality control on dataset: `r params$DATASET_DESCRIPTION`
 library(dplyr)
 library(ggplot2)
 library(scales)
-# Use the copy from GitHub, not CRAN, which has support for standard SQL.
-# install.packages("devtools")
-# devtools::install_github("rstats-db/bigrquery")
 library(bigrquery)
 ```
 

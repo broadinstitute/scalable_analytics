@@ -43,9 +43,6 @@ This report performs differential expression on dataset: `r params$DATASET_DESCR
 
 ```{r}
 library(dplyr)
-# Use the copy from GitHub, not CRAN, which has support for standard SQL.
-# install.packages("devtools")
-# devtools::install_github("rstats-db/bigrquery")
 library(bigrquery)
 ```
 
