@@ -9,14 +9,13 @@ https://cloud.google.com/solutions/using-cloud-dataflow-for-batch-predictions-wi
 https://github.com/GoogleCloudPlatform/dataflow-prediction-example
 """
 
-import logging
-
 import apache_beam as beam
 from apache_beam.io import tfrecordio
 from apache_beam.io.filesystem import CompressionTypes
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.options.pipeline_options import SetupOptions
 from apache_beam.options.pipeline_options import WorkerOptions
+import logging
 import tensorflow as tf
 
 # The KMeansClustering import is not used in the python code below, but
@@ -78,8 +77,6 @@ class PredictDoFn(beam.DoFn):
           sess, [tf.saved_model.tag_constants.SERVING], self.model_export_dir)
     signature_def = meta_graph_def.signature_def[
         tf.saved_model.signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
-    self.input_tensor = signature_def.inputs[
-        tf.saved_model.signature_constants.CLASSIFY_INPUTS].name
     self.input_tensors = [str(x.name) for x in signature_def.inputs.values()]
     if self.INPUT_TENSOR not in self.input_tensors:
       raise ValueError('Expected input tensor %s not in %s with keys %s',
