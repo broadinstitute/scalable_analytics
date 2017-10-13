@@ -21,7 +21,7 @@ class QueryTest(bq_test_case.BQTestCase):
   @classmethod
   def create_mock_tables(cls):
     """Create mock tables."""
-    cls.src_table_name = cls.table_path("cell_metrics")
+    cls.src_table_name = cls.client.path("cell_metrics")
     cls.client.populate_table(
         cls.src_table_name,
         [("cell", "STRING"), ("alltrans", "INTEGER"),

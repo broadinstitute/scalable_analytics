@@ -6,7 +6,6 @@
 import unittest
 from jinja2 import Template
 from verily.bigquery_wrapper import bq_test_case
-from verily.bigquery_wrapper import mock_bq
 
 
 class QueryTest(bq_test_case.BQTestCase):
@@ -14,37 +13,36 @@ class QueryTest(bq_test_case.BQTestCase):
   @classmethod
   def setUpClass(cls):
     """Set up class."""
-    # Either BigQuery or the SQLite mock can be used for this
-    # test.
-    super(QueryTest, cls).setUpClass(use_mocks=True)
+    # Use BigQuery for this test.
+    super(QueryTest, cls).setUpClass(use_mocks=False)
 
   @classmethod
   def create_mock_tables(cls):
     """Create mock tables."""
-    cls.src_table_name = cls.client.path("gene_metrics")
-
+    cls.src_table_name = cls.client.path("cluster_assignments")
     cls.client.populate_table(
         cls.src_table_name,
-        [("gene", "STRING"), ("alltrans", "INTEGER"), ("cell_cnt", "INTEGER")],
+        [("cell", "STRING"), ("cluster", "INTEGER")],
         [
-            ["gene1_pass", 61, 31],
-            ["gene2_fail_too_few_cells", 61, 30],
-            ["gene3_fail_too_few_trans", 60, 31],
-            ["gene4_fail_both", 60, 30]
+            ["cell1", 1],
+            ["cell2", 2],
+            ["cell3", 3],
+            ["cell4", 2],
+            ["cell5", 2]
         ]
     )
 
-  def test_passing_genes(self):
+  def test_raw_data_counts(self):
     """Test bq.Client.get_query_results."""
     sql = Template(
-        open("passing_genes.sql", "r").read()).render(
-            {"GENE_METRICS_TABLE": self.src_table_name})
+        open("cluster_cell_counts.sql", "r").read()).render(
+            {"CLUSTER_TABLE": self.src_table_name})
 
     result = self.client.get_query_results(sql)
 
     self.assertSetEqual(
         set(result),
-        set([("gene1_pass",)]))
+        set([(1, 1), (2, 3), (3, 1)]))
 
 if __name__ == "__main__":
   unittest.main()

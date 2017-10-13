@@ -24,26 +24,43 @@ class QueryTest(bq_test_case.BQTestCase):
         cls.src_table_name,
         [("cell", "STRING"), ("gene", "STRING"), ("trans_cnt", "INTEGER")],
         [
-            ["cell1", "Ttyh1", 0],
-            ["cell2", "Ttyh1", 0],
+            ["cell1", "Ttyh1", 3],
+            ["cell2", "Ttyh1", 45],
             ["cell2", "Malat1", 10],
-            ["cell3", "Ttyh1", 10],
+            ["cell3", "Ttyh1", 50],
             ["cell3", "mt-Rnr2", 10],
             ["cell4", "mt-Rnr2", 10]
+        ]
+    )
+
+    cls.cluster_table_name = cls.client.path("cluster_assignments")
+    cls.client.populate_table(
+        cls.cluster_table_name,
+        [("cell", "STRING"), ("cluster", "INTEGER")],
+        [
+            ["cell1", 1],
+            ["cell2", 2],
+            ["cell3", 2],
+            ["cell4", 1]
         ]
     )
 
   def test_raw_data_counts(self):
     """Test bq.Client.get_query_results."""
     sql = Template(
-        open("raw_data_counts.sql", "r").read()).render(
-            {"RAW_DATA_TABLE": self.src_table_name})
+        open("gene_expression_by_cluster.sql", "r").read()).render({
+            "RAW_DATA_TABLE": self.src_table_name,
+            "CLUSTER_TABLE": self.cluster_table_name,
+            "MARKER_GENE_LIST": "'Ttyh1', 'Malat1'"
+        })
 
     result = self.client.get_query_results(sql)
 
     self.assertSetEqual(
         set(result),
-        set([(3, 4),]))
+        set([("Ttyh1", 1, 3.0, 0.5),
+             ("Ttyh1", 2, (45.0+50.0)/2.0, 1.0),
+             ("Malat1", 2, 10.0, 0.5)]))
 
 if __name__ == "__main__":
   unittest.main()

@@ -19,7 +19,7 @@ class QueryTest(bq_test_case.BQTestCase):
   @classmethod
   def create_mock_tables(cls):
     """Create mock tables."""
-    cls.src_table_name = cls.table_path("raw_data")
+    cls.src_table_name = cls.client.path("raw_data")
     cls.client.populate_table(
         cls.src_table_name,
         [("cell", "STRING"), ("gene", "STRING"), ("trans_cnt", "INTEGER")],
@@ -33,7 +33,7 @@ class QueryTest(bq_test_case.BQTestCase):
         ]
     )
 
-    cls.cell_filter_table_name = cls.table_path("passing_cells")
+    cls.cell_filter_table_name = cls.client.path("passing_cells")
     cls.client.populate_table(
         cls.cell_filter_table_name,
         [("cell", "STRING")],
@@ -44,7 +44,7 @@ class QueryTest(bq_test_case.BQTestCase):
         ]
     )
 
-    cls.gene_filter_table_name = cls.table_path("passing_genes")
+    cls.gene_filter_table_name = cls.client.path("passing_genes")
     cls.client.populate_table(
         cls.gene_filter_table_name,
         [("gene", "STRING")],
