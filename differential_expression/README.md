@@ -30,3 +30,12 @@ to BigQuery.  To run it:
 expression of one particular cluster compared to all others.  It will materialize
 the result of  [differential_expression_one_vs_the_rest.sql](./differential_expression_one_vs_the_rest.sql)
 to a new table.
+
+## If you want to change or update this code
+
+To run the BigQuery query integration tests:
+
+* Install [the test
+  framework](https://github.com/verilylifesciences/analysis-py-utils)
+  via `pip install git+https://github.com/verilylifesciences/analysis-py-utils.git@v0.1.0`
+* and then run the test like so `python cell_metrics_test.py`

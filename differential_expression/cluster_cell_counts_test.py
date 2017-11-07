@@ -5,6 +5,7 @@
 
 import unittest
 from jinja2 import Template
+from google.cloud.bigquery.schema import SchemaField
 from verily.bigquery_wrapper import bq_test_case
 
 
@@ -22,7 +23,10 @@ class QueryTest(bq_test_case.BQTestCase):
     cls.src_table_name = cls.client.path("cluster_assignments")
     cls.client.populate_table(
         cls.src_table_name,
-        [("cell", "STRING"), ("cluster", "INTEGER")],
+        [
+          SchemaField("cell", "STRING"),
+          SchemaField("cluster", "INTEGER")
+          ],
         [
             ["cell1", 1],
             ["cell2", 2],

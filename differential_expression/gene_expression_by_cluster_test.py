@@ -5,8 +5,8 @@
 
 import unittest
 from jinja2 import Template
+from google.cloud.bigquery.schema import SchemaField
 from verily.bigquery_wrapper import bq_test_case
-
 
 class QueryTest(bq_test_case.BQTestCase):
 
@@ -22,7 +22,11 @@ class QueryTest(bq_test_case.BQTestCase):
     cls.src_table_name = cls.client.path("raw_data")
     cls.client.populate_table(
         cls.src_table_name,
-        [("cell", "STRING"), ("gene", "STRING"), ("trans_cnt", "INTEGER")],
+        [
+          SchemaField("cell", "STRING"),
+          SchemaField("gene", "STRING"),
+          SchemaField("trans_cnt", "INTEGER")
+          ],
         [
             ["cell1", "Ttyh1", 3],
             ["cell2", "Ttyh1", 45],
@@ -36,7 +40,10 @@ class QueryTest(bq_test_case.BQTestCase):
     cls.cluster_table_name = cls.client.path("cluster_assignments")
     cls.client.populate_table(
         cls.cluster_table_name,
-        [("cell", "STRING"), ("cluster", "INTEGER")],
+        [
+          SchemaField("cell", "STRING"),
+          SchemaField("cluster", "INTEGER")
+          ],
         [
             ["cell1", 1],
             ["cell2", 2],
