@@ -5,6 +5,7 @@
 
 import unittest
 from jinja2 import Template
+from google.cloud.bigquery.schema import SchemaField
 from verily.bigquery_wrapper import bq_test_case
 
 
@@ -24,8 +25,12 @@ class QueryTest(bq_test_case.BQTestCase):
     cls.src_table_name = cls.client.path("cell_metrics")
     cls.client.populate_table(
         cls.src_table_name,
-        [("cell", "STRING"), ("alltrans", "INTEGER"),
-         ("mttrans", "INTEGER"), ("gene_cnt", "INTEGER")],
+        [
+          SchemaField("cell", "STRING"),
+          SchemaField("alltrans", "INTEGER"),
+          SchemaField("mttrans", "INTEGER"),
+          SchemaField("gene_cnt", "INTEGER")
+          ],
         [
             ["cell1_pass", 50, 4, 501],
             ["cell2_fail_too_few_genes", 50, 4, 500],

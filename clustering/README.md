@@ -14,7 +14,7 @@ virtualenv --system-site-packages ~/virtualEnvs/tensorflow
 source ~/virtualEnvs/tensorflow/bin/activate
 pip install --upgrade pip jinja2 google-cloud-dataflow tensorflow
 # Downgrade six per https://stackoverflow.com/a/46301373/4138705
-pip install six==1.10.0
+pip install six==1.10.0 --ignore-installed
 ```
 
 3. Set some environment variables to make copy/pasting commands a bit easier.

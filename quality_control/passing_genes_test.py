@@ -5,8 +5,8 @@
 
 import unittest
 from jinja2 import Template
+from google.cloud.bigquery.schema import SchemaField
 from verily.bigquery_wrapper import bq_test_case
-from verily.bigquery_wrapper import mock_bq
 
 
 class QueryTest(bq_test_case.BQTestCase):
@@ -14,9 +14,7 @@ class QueryTest(bq_test_case.BQTestCase):
   @classmethod
   def setUpClass(cls):
     """Set up class."""
-    # Either BigQuery or the SQLite mock can be used for this
-    # test.
-    super(QueryTest, cls).setUpClass(use_mocks=True)
+    super(QueryTest, cls).setUpClass(use_mocks=False)
 
   @classmethod
   def create_mock_tables(cls):
@@ -25,7 +23,11 @@ class QueryTest(bq_test_case.BQTestCase):
 
     cls.client.populate_table(
         cls.src_table_name,
-        [("gene", "STRING"), ("alltrans", "INTEGER"), ("cell_cnt", "INTEGER")],
+        [
+          SchemaField("gene", "STRING"),
+          SchemaField("alltrans", "INTEGER"),
+          SchemaField("cell_cnt", "INTEGER")
+          ],
         [
             ["gene1_pass", 61, 31],
             ["gene2_fail_too_few_cells", 61, 30],
