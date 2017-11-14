@@ -9,5 +9,5 @@ SELECT
 FROM
   `{{ GENE_METRICS_TABLE }}`
 WHERE
-  30 < cell_cnt
-  AND 60 < alltrans
+  {{ MIN_CELLS }} < cell_cnt
+  AND {{ MIN_COUNTS }} < alltrans

@@ -7,19 +7,25 @@
 title: "Quality Control"
 output: html_document
 params:
-  PROJECT_ID: "PROJECT_ID"
-  DATASET_DESCRIPTION: "Brief description of the single-cell dataset."
+  PROJECT_ID: "scalable-analysis-playground"
+  DATASET_DESCRIPTION: "Retinal Bipolar Neurons http://www.cell.com/cell/pdf/S0092-8674(16)31007-8.pdf"
   # This table must exist.
-  RAW_DATA_TABLE: "PROJECT_ID_THE_DATA_IS_IN.DATASET_NAME.TABLE_NAME"
+  RAW_DATA_TABLE: "scalable-analysis-playground.mouse_retinal_bipolar.scrna_seq"
   # These tables will be created.
-  CELL_METRICS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
-  PASSING_CELLS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
-  GENE_METRICS_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
-  PASSING_GENES_TABLE: "DESTINATION_DATASET_NAME.TABLE_NAME"
+  CELL_METRICS_TABLE: "orr_bp.cell_metrics"
+  PASSING_CELLS_TABLE: "orr_bp.passing_cells"
+  GENE_METRICS_TABLE: "orr_bp.gene_metrics"
+  PASSING_GENES_TABLE: "orr_bp.passing_genes"
+  MT_GENE_TABLE: "orr_bp.gene_table"
+  PASSING_MT_FRACTION: 0.1
+  MIN_GENES: 501  # SQL BETWEEN operator is inclusive for range, want > 500 genes/cell
+  MAX_GENES: 23000
+  MIN_CELLS: 30
+  MIN_COUNTS: 60
   # Only create the tables if they do not already exist.  For other options, see
   # https://cloud.google.com/dataflow/model/bigquery-io#writing-to-bigquery
-  WRITE_DISPOSITION: "WRITE_EMPTY"
-
+  CREATE_DISPOSITION: "CREATE_IF_NEEDED"
+  WRITE_DISPOSITION: "WRITE_TRUNCATE"  # CHANGE THIS TO WRITE_EMPTY SO USERS DO NOT OVERWRITE TABLE
 # This RMarkdown is a parameterized report.  See
 # http://rmarkdown.rstudio.com/developer_parameterized_reports.html
 # for more detail.
@@ -191,4 +197,5 @@ perform_bqquery(sql_path = "passing_genes.sql",
 
 ```{r passing_counts, comment=NA}
 perform_bqquery(sql_path = "passing_data_counts.sql")
+sessionInfo()
 ```

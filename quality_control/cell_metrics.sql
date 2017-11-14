@@ -5,7 +5,7 @@
 SELECT
   cell,
   SUM(trans_cnt) AS alltrans,
-  SUM(IF(gene LIKE "mt-%",
+  SUM(IF(gene IN (SELECT gene FROM `{{ MT_GENE_TABLE }}`),
       trans_cnt,
       0)) AS mttrans,
   COUNT(DISTINCT gene) AS gene_cnt
