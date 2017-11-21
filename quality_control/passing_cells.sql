@@ -9,5 +9,5 @@ SELECT
 FROM
   `{{ CELL_METRICS_TABLE }}`
 WHERE
-  .10 > mttrans/alltrans
-  AND 500 < gene_cnt
+  {{ PASSING_MT_FRACTION }} > mttrans/alltrans
+  AND gene_cnt BETWEEN {{ MIN_GENES }} AND {{ MAX_GENES }}
